@@ -20,7 +20,7 @@ IO.readlines("config.txt").each do |ec|
   opts[a[0]] = a[1]
 end
 
-board = opts["BOARD"]
+board = ENV["BOARD"] || opts["BOARD"]
 @key = opts["KEY"]
 @token = opts["TOKEN"]
 
@@ -222,34 +222,9 @@ def format_checklist_data(checklist)
   checklist.sort_by{|nn| nn["pos"] }.map {|n| "- [#{n["state"] == "complete" ? "x" : " " }] #{n["name"]}"}.join("\n")
 end
 
-def add_checklist_data(checklist_data, card)
-  old_checklists = JSON.parse(File.read("checklists.json"))
-  checklist_data.each do |cl_data|
-    old_checklists.each do |old_cl_data|
-      if old_cl_data["id"] == cl_data["idChecklist"]
-        old_cl_data["checkItems"].each do |check_item|
-          if check_item["id"] == cl_data["id"]
-            unless check_item == cl_data
-              formatted_old_cl_data = format_checklist_data(old_cl_data["checkItems"])
-              formatted_cl_data = format_checklist_data(checklist_data)
-              new_action = {
-                "type"=>"changedChecklistItem",
-                "date"=>"#{Time.now}",
-                "old"=>"#{formatted_old_cl_data}",
-                "new"=>"#{formatted_cl_data}"
-              }
-              card["actions"] << new_action
-            end
-          end
-        end
-      end
-    end
-  end
-end
-
 puts "---------------------------------------------------------"
 new_checklists = {}
-old_checklists = JSON.parse(File.read("checklists.json"))
+old_checklists = JSON.parse(File.read("checklists-#{board}.json"))
 cards.each do |card|
   if !(card["idChecklists"] || []).empty?
     card["idChecklists"].each do |checklist_id|
@@ -269,7 +244,7 @@ cards.each do |card|
   end
   describe_card(card)
 end
-File.open("checklists.json", 'w') {|f| f << new_checklists.to_json}
+File.open("checklists-#{board}.json", 'w') {|f| f << new_checklists.to_json}
 puts "no. of cards: #{cards.size}"
 
 puts "---------------------------------------------------------"
