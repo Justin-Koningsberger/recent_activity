@@ -12,6 +12,7 @@ unless ARGV.size == 1
 end
 
 @since = ARGV.first.to_i.days.ago.to_date
+before = Time.now.to_date + 1
 
 opts = {}
 IO.readlines("config.txt").each do |ec|
@@ -23,7 +24,7 @@ board = opts["BOARD"]
 @key = opts["KEY"]
 @token = opts["TOKEN"]
 
-@board_actions = JSON.parse(`curl "https://trello.com/1/boards/#{board}/actions?/?fields=all&key=#{@key}&token=#{@token}"`)
+@board_actions = JSON.parse(`curl "https://trello.com/1/boards/#{board}/actions?fields=all&key=#{@key}&token=#{@token}&before=#{before}&since=#{@since}"`)
 @board_actions.select! { |action| action["type"] == "deleteCard" || action["type"] == "deleteCheckItem" }
 @board_actions.sort_by! {|action| Time.parse(action["date"])}
 
@@ -31,7 +32,6 @@ lists = `curl "https://trello.com/1/boards/#{board}/lists?cards=none&card_fields
 @lists= JSON.parse(lists)
 
 cards = []
-before = Time.now.to_date + 1
 cards_left = true
 limit = 10
 
